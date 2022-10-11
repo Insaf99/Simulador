@@ -1,4 +1,4 @@
-# Simulado rde Asignación de Memoria y
+# Simulador de Asignación de Memoria y
 Planificación de procesos
 --------------------------------------
 Implementación de un simulador que permita mostrar los aspectos de la planificación a Corto Plazo y la gestión de la memoria con particiones Fijas dentro de un esquema de un solo
