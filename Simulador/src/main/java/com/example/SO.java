@@ -11,9 +11,8 @@ public class SO {
     private Memoria memoria;
     private CPU cpu;
 
-    private Proceso Aux;
     /**
-     *  La cola LISTOS contiene los procesos que están cargados en memoria, esperando por CPU
+     * La cola LISTOS contiene los procesos que están cargados en memoria, esperando por CPU
      */
     private List<Proceso> listos = new ArrayList<Proceso>();
     /**
@@ -21,11 +20,11 @@ public class SO {
      */
     private List<Proceso> salientes = new ArrayList<Proceso>();
     /**
-     *  La cola NUEVOS contiene los procesos leidos de un archivo.
+     * La cola NUEVOS contiene los procesos leidos de un archivo.
      */
     private List<Proceso> nuevos = new ArrayList<Proceso>();
     /**
-     *  La cola LISTOSSUSPENDIDOS contiene los procesos que fueron admitidos pero NO están cargados en memoria.
+     * La cola LISTOSSUSPENDIDOS contiene los procesos que fueron admitidos pero NO están cargados en memoria.
      */
 
     private List<Proceso> listoSuspendido = new ArrayList<Proceso>();
@@ -51,7 +50,7 @@ public class SO {
     }
 
     /**
-     *  Mueve los procesos de la cola NUEVOS a ListosSuspendidos dependiendo del tiempo de arribo.
+     * Mueve los procesos de la cola NUEVOS a ListosSuspendidos dependiendo del tiempo de arribo.
      */
     public void planificadorLargoPlazo() {
         List<Proceso> tmp = new ArrayList<Proceso>();
@@ -65,11 +64,11 @@ public class SO {
     }
 
     /**
-     *  Mueve los procesos de ListosSuspendidos a LISTOS dependiendo si hay particiones libres. Selecciona la partición que genere menor FI
+     * Mueve los procesos de ListosSuspendidos a LISTOS dependiendo si hay particiones libres. Selecciona la partición que genere menor FI
      */
 
     public void planificadorMedianoPlazo() {
-        Aux.ordenarTI(listoSuspendido);
+        Auxiliar.ordenarTI(listoSuspendido);
         if (memoria.isParticionEmpty()) {
             // Hay particiones vacias. Intenta asignar los procesos que tienen TI menor a dichas particiones de memoria
             Boolean flag = false;
@@ -117,7 +116,7 @@ public class SO {
              * Compara el tiempo de irrupción del proceso que quiere entrar con el que se encuentra en CPU. Si es menor procede a buscar una partición
              */
             if (null != cpu.getProceso() && plYs.getTiempoIrrupcion() < cpu.getProceso().getTiempoIrrupcion()) {
-                Aux.ordenarTI(listos);
+                Auxiliar.ordenarTI(listos);
                 Integer n = listos.size() - 1;
                 Integer nEncontrado = -1;
                 /**
@@ -162,7 +161,7 @@ public class SO {
                 /**
                  * Busca una posición de memoria en la cola de LISTOS comparando tiempo de irrupción y tamaño de partición
                  */
-                Aux.ordenarTI(listos);
+                Auxiliar.ordenarTI(listos);
                 Integer n = listos.size() - 1;
                 Integer nEncontrado = -1;
                 while (n > -1 && nEncontrado < 0) {
@@ -191,11 +190,11 @@ public class SO {
     }
 
     /**
-     *  Selecciona el proceso a ejecutarse aplicando SRTF. (Comparando los Tiempos de Irrupción).
+     * Selecciona el proceso a ejecutarse aplicando SRTF. (Comparando los Tiempos de Irrupción).
      */
 
     public void planificadorCortoPlazo() {
-        Aux.ordenarTI(listos);
+        Auxiliar.ordenarTI(listos);
         this.terminarProceso();
         if (listos.size() > 0) {
             Proceso victima = listos.remove((int) 0);
@@ -212,7 +211,7 @@ public class SO {
                 }
             }
         }
-        Aux.debug(this);
+        Auxiliar.debug(this);
         cpu.incrementarClock();
     }
 
@@ -223,13 +222,13 @@ public class SO {
     public void terminarProceso() {
         if (null != cpu.getProceso()) {
             if (cpu.getProceso().getTiempoIrrupcion() == 0) {
-                Aux.imprimir(this);
+                Auxiliar.imprimir(this);
                 salientes.add(cpu.getProceso());
                 cpu.getProceso().getParticion().setProceso(null);
                 cpu.getProceso().setEmptyParticion();
                 cpu.setProceso(null);
                 planificadorMedianoPlazo();
-                Aux.ordenarTI(listos);
+                Auxiliar.ordenarTI(listos);
             }
         }
     }
@@ -259,8 +258,8 @@ public class SO {
      */
     private void cargarProcesos(File file) {
         System.out.print("CargandoProcesos..........");
-        this.nuevos = Aux.LoadFile(file);
-        Aux.ordenarTA(nuevos);
+        this.nuevos = Auxiliar.LoadFile(file);
+        Auxiliar.ordenarTA(nuevos);
         System.out.println("OK");
         System.out.println(nuevos);
     }
@@ -288,3 +287,4 @@ public class SO {
     public List<Proceso> getSalientes() {
         return this.salientes;
     }
+}
