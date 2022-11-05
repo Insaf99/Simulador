@@ -5,37 +5,41 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class CPU {
 
-    private Proceso proceso = null;
-    private int TIactual = 1;
+    private Proceso proceso;
+    private Integer clock;
 
-    public void aumentarTIactual(){
-        this.TIactual +=1;
+    @Override
+    public String toString() {
+        return "CPU: proceso=" + proceso + ", clock=" + clock;
     }
-    public void terminarProceso(){
-        System.out.println("Proceso "+this.proceso.getIdp()+" finalizado");
-        this.proceso = null;
-        this.TIactual = 1;
+    //Inicializa el clock en cero.
+    public CPU() {
+        this.clock = 0;
     }
-    public void mostrarCPU(){
-        if (!this.proceso.equals(null)){
-            System.out.println("-- Proceso en la CPU --");
-            System.out.println("");
-            System.out.println(" --Proceso-- | --TI-- | --Tejec-- ");
-            System.out.println(" --"+this.proceso.getIdp()+"-- | --"+ this.proceso.getTi()+"-- | --"+this.TIactual);
-        }else{
-            System.out.println("Procesador Vacio");
+
+    public Proceso getProceso() {
+        return proceso;
+    }
+
+    public void setProceso(Proceso proceso) {
+        this.proceso = proceso;
+    }
+
+    public void incrementarClock() {
+        this.clock++;
+        if(null!=this.proceso) {
+            this.proceso.decrementarTiempoIrupcion();
         }
     }
-    public void ejecutarProceso(){
-        System.out.println("");
-        System.out.println("Proceso : "+this.proceso.getIdp()+" se esta ejecutando");
-        System.out.println("");
+
+    public Integer getClock() {
+        return clock;
+    }
+
+    public Boolean isEmpty() {
+        return null == this.proceso;
     }
 
 }
