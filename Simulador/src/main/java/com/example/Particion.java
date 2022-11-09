@@ -5,82 +5,53 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Particion {
-    private static Integer ultimoId = 1;
+    private static Integer ultimoId = 0;
     private Integer id;
     private Integer tamanio;
-    private Integer posicionInicio;
-    private Integer posicionFin;
+    private Integer direccionInicio;
+    private Integer direccionFin;
     private Integer fragmentacionInterna;
     private Proceso proceso;
-    private Boolean so;
 
-    public Particion(Integer tamanio, Integer posicionInicio, Integer posicionFin, Boolean so) {
-        this.id = Particion.ultimoId;
-        Particion.ultimoId++;
+    public Particion(Integer tamanio, Integer direccionInicio, Integer direccionFin) {
+        this.id = ultimoId;
+        ultimoId++;
         this.tamanio = tamanio;
-        this.posicionInicio = posicionInicio;
-        this.posicionFin = posicionFin;
+        this.direccionInicio = direccionInicio;
+        this.direccionFin = direccionFin;
         this.proceso = null;
         this.fragmentacionInterna = 0;
-        this.so = so;
     }
 
-    @Override
-    public String toString() {
-        String np = "----";
-        if (so)
-            np = "SO";
-        else if (null != proceso)
-            np = proceso.getId().toString();
-        return "id=" + id + ", tamanio=" + tamanio + ", posicionInicio=" + posicionInicio + ", posicionFin="
-                + posicionFin + ", fragmentacionInterna=" + fragmentacionInterna + ", proceso=" + np + "\n";
-    }
-
-    public Boolean isSo() {
-        return so;
+    public void vaciarParticion() {
+        this.setProceso(null);
     }
 
     public Boolean isEmpty() {
         return null == this.proceso;
     }
 
-    public Proceso getProceso() {
-        return proceso;
-    }
-
     public void setProceso(Proceso proceso) {
+
         this.proceso = proceso;
-        if (null != this.proceso) {
+
+        if (this.proceso != null) {
             this.proceso.setParticion(this);
         }
+
         this.calcularFragmentacionInterna();
     }
 
-    public Integer getId() {
-        return id;
-    }
-
-    public Integer getTamanio() {
-        return tamanio;
-    }
-
-    public Integer getPosicionInicio() {
-        return posicionInicio;
-    }
-
-    public Integer getPosicionFin() {
-        return posicionFin;
-    }
-
-    public Integer getFragmentacionInterna() {
-        return fragmentacionInterna;
-    }
-
     private void calcularFragmentacionInterna() {
-        this.fragmentacionInterna = 0;
-        if (null != this.proceso) {
+        if (this.proceso != null) {
             this.fragmentacionInterna = this.tamanio - this.proceso.getTamanio();
+        } else {
+            this.fragmentacionInterna = 0;
         }
     }
 }

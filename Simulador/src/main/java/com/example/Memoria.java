@@ -1,46 +1,43 @@
 package com.example;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Memoria {
-    private Integer tamanioMemoria;
-    private List<Particion> particiones = new ArrayList<Particion>();
+    private List<Particion> particiones = new ArrayList<>();
 
-    public Memoria(Integer tamanioMemoria, Integer tamanioSO) {
-        this.tamanioMemoria = tamanioMemoria;
+    public Memoria(Integer tamanioSistemaOperativo) {
         Integer posicionInicio = 0;
-        Integer posicionFin = tamanioSO - 1;
-        Particion particionSO = new Particion(tamanioSO, posicionInicio, posicionFin, true);
-        this.particiones.add(particionSO);
+        Integer posicionFin = tamanioSistemaOperativo - 1;
+
+        this.particiones.add(new Particion(tamanioSistemaOperativo, posicionInicio, posicionFin));
     }
 
-    public void nuevaParticion(Integer tamañoKB) {
-        Integer posicionInicio = particiones.get(0).getPosicionFin() + 1;
-        Integer posicionFin = posicionInicio + tamañoKB - 1;
-        Particion particion = new Particion(tamañoKB, posicionInicio, posicionFin, false);
-        particiones.add(0, particion);
+    public void crearNuevaParticion(Integer tamanio) {
+
+        Integer posicionInicio = particiones.get(0).getDireccionFin() + 1;
+        Integer posicionFin = posicionInicio + tamanio - 1;
+
+        particiones.add(0, new Particion(tamanio, posicionInicio, posicionFin));
     }
 
-    public Boolean isParticionEmpty() {
-        Boolean empty = false;
+    public boolean existeParticionVacia() {
+
+        boolean existeParticionVacia = false;
         for (Particion particion : particiones) {
-            empty = (!particion.isSo() && particion.isEmpty()) || empty;
+            // la particion 0 es el sistema operativo, NO se puede tocar
+            existeParticionVacia = (!particion.getId().equals(0) && particion.getProceso() == null) || existeParticionVacia;
         }
-        return empty;
-    }
 
-    public Integer getTamanioMemoria() {
-        return tamanioMemoria;
+        return existeParticionVacia;
     }
-
-    public List<Particion> getParticiones() {
-        return particiones;
-    }
-
-    @Override
-    public String toString() {
-        return "Memoria: tamanioMemoria=" + tamanioMemoria + " particiones=\n" + particiones;
-    }
-
 }
