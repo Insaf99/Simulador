@@ -134,6 +134,23 @@ public class Main {
             System.out.println("\tNo hay procesos en Estado LISTO");
         }
 
+        System.out.println("\nProceso en EJECUCION:");
+        if(sistemaOperativo.getCpu().getProcesoEnEjecucion() != null) {
+            Proceso proceso = sistemaOperativo.getCpu().getProcesoEnEjecucion();
+            System.out.println("\tProceso: " + proceso.getId() + ", Tiempo de Irrupcion: " + proceso.getTiempoIrrupcion() + ", Tamaño: " + proceso.getTamanio() + "kb");
+        } else {
+            System.out.println("\tNo hay ningun proceso en EJECUCION");
+        }
+
+        System.out.println("\nCola de Procesos Terminados:");
+        if(!sistemaOperativo.getColaDeProcesosTerminados().isEmpty()) {
+            for (Proceso proceso : sistemaOperativo.getColaDeProcesosTerminados()) {
+                System.out.println("\tProceso: " + proceso.getId() + ", Tiempo de Irrupcion: " + proceso.getTiempoIrrupcion() + ", Tamaño: " + proceso.getTamanio() + "kb");
+            }
+        } else {
+            System.out.println("\tNo hay procesos TERMINADOS");
+        }
+
         System.out.println("--------------------------------------------------------------------------------------------");
 
         // TODO ver porque no anda el Scanner aca, tira NoSuchElementException, lo dejo como un Thread.sleep mientras

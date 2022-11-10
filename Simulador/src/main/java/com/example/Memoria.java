@@ -15,11 +15,11 @@ import java.util.List;
 public class Memoria {
     private List<Particion> particiones = new ArrayList<>();
 
-    public Memoria(Integer tamanioSistemaOperativo) {
+    public Memoria(Integer tamanioParticionSistemaOperativo) {
         Integer posicionInicio = 0;
-        Integer posicionFin = tamanioSistemaOperativo - 1;
+        Integer posicionFin = tamanioParticionSistemaOperativo - 1;
 
-        this.particiones.add(new Particion(tamanioSistemaOperativo, posicionInicio, posicionFin));
+        this.particiones.add(new Particion(tamanioParticionSistemaOperativo, posicionInicio, posicionFin));
     }
 
     public void crearNuevaParticion(Integer tamanio) {
