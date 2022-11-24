@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Particion {
-    private static Integer ultimoId = 0;
     private Integer id;
     private Integer tamanio;
     private Integer direccionInicio;
@@ -18,22 +17,17 @@ public class Particion {
     private Integer fragmentacionInterna;
     private Proceso proceso;
 
-    public Particion(Integer tamanio, Integer direccionInicio, Integer direccionFin) {
-        this.id = ultimoId;
-        ultimoId++;
+    public Particion(Integer id, Integer tamanio, Integer direccionInicio, Integer direccionFin) {
+        this.id = id;
         this.tamanio = tamanio;
         this.direccionInicio = direccionInicio;
         this.direccionFin = direccionFin;
-        this.proceso = null;
         this.fragmentacionInterna = 0;
+        this.proceso = null;
     }
 
     public void vaciarParticion() {
         this.setProceso(null);
-    }
-
-    public Boolean isEmpty() {
-        return null == this.proceso;
     }
 
     public void setProceso(Proceso proceso) {
