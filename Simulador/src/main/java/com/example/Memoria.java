@@ -15,19 +15,19 @@ import java.util.List;
 public class Memoria {
     private List<Particion> particiones = new ArrayList<>();
 
-    public Memoria(Integer tamanioParticionSistemaOperativo) {
+    public Memoria(Integer tamanioSistemaOperativo) {
         Integer posicionInicio = 0;
-        Integer posicionFin = tamanioParticionSistemaOperativo - 1;
+        Integer posicionFin = tamanioSistemaOperativo - 1;
 
-        this.particiones.add(new Particion(0, tamanioParticionSistemaOperativo, posicionInicio, posicionFin));
+        this.particiones.add(new Particion(tamanioSistemaOperativo, posicionInicio, posicionFin));
     }
 
-    public void crearNuevaParticion(Integer id, Integer tamanio) {
+    public void crearNuevaParticion(Integer tamanio) {
 
         Integer posicionInicio = particiones.get(0).getDireccionFin() + 1;
         Integer posicionFin = posicionInicio + tamanio - 1;
 
-        particiones.add(0, new Particion(id, tamanio, posicionInicio, posicionFin));
+        particiones.add(0, new Particion(tamanio, posicionInicio, posicionFin));
     }
 
     public boolean existeParticionVacia() {

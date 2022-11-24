@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.example.Cpu.instanteActual;
@@ -15,10 +16,9 @@ import static com.example.Main.imprimirEstadoDelSistema;
 @AllArgsConstructor
 public class SistemaOperativo {
 
+    private static Integer tamanioParticionSO = 100;
     private Memoria memoria;
     private Cpu cpu;
-    private Integer nivelDeMultiprogramacion = 0;
-    private UnidadDeGestionDeMemoria unidadDeGestionDeMemoria;
 
     private List<Proceso> colaDeProcesosListos = new ArrayList<>();
     private List<Proceso> colaDeProcesosTerminados = new ArrayList<>();
@@ -27,10 +27,9 @@ public class SistemaOperativo {
 
     public SistemaOperativo(List<Proceso> procesos) {
 
-        // inicializamos la Memoria con las Particiones Indicadas, la Cpu, la MMU y se cargan los procesos
+        // inicializamos la Memoria con las Particiones Indicadas, la Cpu y se cargan los procesos
         this.inicializarMemoria();
         this.inicializarCpu();
-        this.inicializarUnidadDeGestionDeMemoria();
         this.cargarProcesos(procesos);
 
         // imprimo el estado inicial del sistema, con las particiones y la cpu en vacio, pero con los procesos cargados
@@ -40,61 +39,25 @@ public class SistemaOperativo {
         this.ejecutarProcesos();
     }
 
-    private void inicializarMemoria() {
-        // creo la memoria con la particion inicial por defecto para el Sistema Operativo de 100kb
-        this.memoria = new Memoria(100);
-
-        // creo las particiones extras necesarias
-        this.memoria.crearNuevaParticion(1, 250);
-        this.memoria.crearNuevaParticion(2, 120);
-        this.memoria.crearNuevaParticion(3, 60);
-    }
-
-    private void inicializarCpu() {
-        // inicializo la CPU
-        this.cpu = new Cpu();
-    }
-
-    private void inicializarUnidadDeGestionDeMemoria() {
-        // inicializo la MMU
-        this.unidadDeGestionDeMemoria = new UnidadDeGestionDeMemoria();
-    }
-
-    private void cargarProcesos(List<Proceso> procesos) {
-
-        // ordeno los procesos que llegaron en el archivo por tiempo de arribo y los cargo en la cola de nuevos a travez
-        // de la MMU
-        unidadDeGestionDeMemoria.ordenarColaPorTiempoDeArribo(procesos);
-        unidadDeGestionDeMemoria.aniadirProcesosACola(colaDeProcesosNuevos, procesos);
-    }
-
-    private void ejecutarProcesos() {
+    public void ejecutarProcesos() {
 
         // mientras existan procesos en alguna de las colas o en la cpu, significa que todavia quedan procesos por ejecutar
-        while (!colaDeProcesosNuevos.isEmpty() || !colaDeProcesosListosSuspendidos.isEmpty() ||
-                !colaDeProcesosListos.isEmpty() || !(cpu.getProcesoEnEjecucion() == null)) {
-
+        while (!colaDeProcesosNuevos.isEmpty() || !colaDeProcesosListosSuspendidos.isEmpty() || !colaDeProcesosListos.isEmpty() || !(cpu.getProcesoEnEjecucion() == null)) {
             planificadorLargoPlazo();
             planificadorMedianoPlazo();
             planificadorCortoPlazo();
         }
-
-        // imprimir situacion final
-        imprimirEstadoDelSistema(this);
     }
 
     // el planificar de largo plazo mueve los procesos de la cola de Nuevos a Listos Suspendidos dependiendo del tiempo
     // de arribo, o sea, si el proceso "llego" o no. Si los muevo, los elimino de la cola de nuevos
     private void planificadorLargoPlazo() {
         for (Proceso proceso : colaDeProcesosNuevos) {
-            if (proceso.getTiempoArribo() <= instanteActual && nivelDeMultiprogramacion <= 4) {
-
-                // llamo a la MMU para añadir los procesos que pueden entrar a la cola de Listos-Suspendidos
-                unidadDeGestionDeMemoria.aniadirProcesoACola(colaDeProcesosListosSuspendidos, proceso);
-                nivelDeMultiprogramacion++;
+            if (proceso.getTiempoArribo().equals(instanteActual)) {
+                colaDeProcesosListosSuspendidos.add(proceso);
             }
         }
-        unidadDeGestionDeMemoria.eliminarProcesosDeCola(colaDeProcesosNuevos, colaDeProcesosListosSuspendidos);
+        colaDeProcesosNuevos.removeAll(colaDeProcesosListosSuspendidos);
     }
 
     // el planificador de mediano plazo mueve los procesos de la cola de listos-suspendidos a la cola de listos si existen
@@ -102,88 +65,194 @@ public class SistemaOperativo {
     private void planificadorMedianoPlazo() {
 
         // ordeno la cola de procesos listos-suspendidos por tiempo de irrupcion (de menor a mayor, SJF)
-        unidadDeGestionDeMemoria.ordenarColaPorTiempoDeIrrupcion(colaDeProcesosListosSuspendidos);
+        ordenarColaPorTiempoDeIrrupcion(colaDeProcesosListosSuspendidos);
 
         // pregunto existen particiones vacias, si las hay, puedo asignarle un proceso
         if (memoria.existeParticionVacia()) {
 
-            List<Particion> todasLasParticiones = this.memoria.getParticiones();
-            int indiceDeListaDeProcesosListosYSuspendidos = 0;
-            List<Proceso> procesosAniadidosAParticiones = new ArrayList<>();
-
-            while (memoria.existeParticionVacia() && colaDeProcesosListosSuspendidos.size() > indiceDeListaDeProcesosListosYSuspendidos) {
-
-                Proceso proceso = unidadDeGestionDeMemoria.obtenerProcesoDeCola(colaDeProcesosListosSuspendidos, indiceDeListaDeProcesosListosYSuspendidos);
-
-                // Recorro las todasLasParticiones para encontrar la peor, para cumplir con el algoritmo Worst Fit
-                int diferencia = Integer.MIN_VALUE;
-                Integer particionElegida = Integer.MIN_VALUE;
-                int indiceDeParticion = 0;
-                for (Particion particion : todasLasParticiones) {
+            boolean flag = false;
+            List<Particion> particiones = this.memoria.getParticiones();
+            int ixLyS = 0;
+            List<Proceso> tmp = new ArrayList<>();
+            while (memoria.existeParticionVacia() && colaDeProcesosListosSuspendidos.size() > ixLyS) {
+                Proceso p = colaDeProcesosListosSuspendidos.get(ixLyS);
+                // ACA ESTA EL ALGORITMO WORST FIT
+                Integer minDif = Integer.MIN_VALUE;
+                int partIX = -1;
+                for (Particion part : particiones) {
                     // la particion con id 0 es el sistema operativo, NO se puede tocar
-                    if (!particion.getId().equals(0) && particion.getProceso() == null) {
-                        if ((particion.getTamanio() >= proceso.getTamanio()) && (particion.getTamanio() - proceso.getTamanio() > diferencia)) {
-                            diferencia = particion.getTamanio() - proceso.getTamanio();
-                            particionElegida = indiceDeParticion;
+                    if (!part.getId().equals(0) && part.isEmpty()) {
+                        if ((part.getTamanio() >= p.getTamanio()) && (part.getTamanio() - p.getTamanio() > minDif)) {
+                            minDif = part.getTamanio() - p.getTamanio();
+                            partIX = particiones.indexOf(part);
                         }
                     }
-                    indiceDeParticion++;
                 }
-
-                // seteo el proceso elegido a la particion elegida
-                if (!particionElegida.equals(Integer.MIN_VALUE)) {
-                    todasLasParticiones.get(particionElegida).setProceso(proceso);
-                    procesosAniadidosAParticiones.add(proceso);
+                if (partIX >= 0) {
+                    particiones.get(partIX).setProceso(p);
+                    tmp.add(p);
+                    flag = true;
                 }
-
-                indiceDeListaDeProcesosListosYSuspendidos++;
+                ixLyS++;
             }
+            if (flag) {
+                colaDeProcesosListos.addAll(tmp);
+                colaDeProcesosListosSuspendidos.removeAll(tmp);
+            } else {
+                VerificarCpuListos();
+            }
+        } else {
+            // Todas las particiones están llenas
+            VerificarCpuListos();
+        }
+    }
 
-            // luego de mover los procesos a las particiones correspondientes, los elimino de la cola de listos y suspendidos
-            // y los muevo a la cola de listos
-            if (!procesosAniadidosAParticiones.isEmpty()) {
-                unidadDeGestionDeMemoria.aniadirProcesosACola(colaDeProcesosListos, procesosAniadidosAParticiones);
-                unidadDeGestionDeMemoria.eliminarProcesosDeCola(colaDeProcesosListosSuspendidos, procesosAniadidosAParticiones);
+
+    public void VerificarCpuListos() {
+        if (colaDeProcesosListosSuspendidos.size() > 0) {
+            Proceso plYs = colaDeProcesosListosSuspendidos.get(0);
+            /*
+             * Compara el tiempo de irrupción del procesoEnEjecucion que quiere entrar con el que se encuentra en CPU. Si es menor procede a buscar una partición
+             */
+            if (null != cpu.getProcesoEnEjecucion() && plYs.getTiempoIrrupcion() < cpu.getProcesoEnEjecucion().getTiempoIrrupcion()) {
+                ordenarColaPorTiempoDeIrrupcion(colaDeProcesosListos);
+                Integer n = colaDeProcesosListos.size() - 1;
+                Integer nEncontrado = -1;
+                /*
+                 * Busca una posicion de memoria en la cola de LISTOS
+                 */
+                while (n > -1 && nEncontrado < 0) {
+                    Proceso pn = colaDeProcesosListos.get(n);
+                    if (plYs.getTamanio() <= pn.getParticion().getTamanio()) {
+                        nEncontrado = n;
+                    }
+                    n--;
+                }
+                /*
+                 * Se encontró una particion en la cola de LISTOS y hace la expropiación del procesoEnEjecucion que esta en dicha partición
+                 */
+                if (nEncontrado > -1) {
+                    Proceso saliente = colaDeProcesosListos.remove((int) nEncontrado);
+                    Particion part = saliente.getParticion();
+                    saliente.getParticion().vaciarParticion();
+                    colaDeProcesosListosSuspendidos.add(saliente);
+                    part.setProceso(plYs);
+                    colaDeProcesosListosSuspendidos.remove(plYs);
+                    colaDeProcesosListos.add(plYs);
+                } else {
+                    /*
+                     * si no encuentró comprueba que la partición del procesoEnEjecucion que está en CPU sea igual o mayor al tamaño que requiere el procesoEnEjecucion
+                     */
+
+                    if (plYs.getTamanio() <= cpu.getProcesoEnEjecucion().getParticion().getTamanio()) {
+                        Proceso saliente = cpu.getProcesoEnEjecucion();
+                        cpu.setProcesoEnEjecucion(null);
+                        Particion part = saliente.getParticion();
+                        saliente.getParticion().vaciarParticion();
+                        colaDeProcesosListosSuspendidos.add(saliente);
+                        part.setProceso(plYs);
+                        colaDeProcesosListosSuspendidos.remove(plYs);
+                        colaDeProcesosListos.add(plYs);
+                    }
+
+                }
+            } else {
+                /*
+                 * Busca una posición de memoria en la cola de LISTOS comparando tiempo de irrupción y tamaño de partición
+                 */
+                ordenarColaPorTiempoDeIrrupcion(colaDeProcesosListos);
+                Integer n = colaDeProcesosListos.size() - 1;
+                Integer nEncontrado = -1;
+                while (n > -1 && nEncontrado < 0) {
+                    Proceso pp = colaDeProcesosListos.get(n);
+                    if (plYs.getTiempoIrrupcion() < pp.getTiempoIrrupcion()) {
+                        if (plYs.getTamanio() <= pp.getParticion().getTamanio()) {
+                            nEncontrado = n;
+                        }
+                    }
+                    n--;
+                }
+                /*
+                 * Se encontró una particion en la cola de LISTOS y hace la expropiación del procesoEnEjecucion que esta en dicha partición
+                 */
+                if (nEncontrado > -1) {
+                    Proceso saliente = colaDeProcesosListos.remove((int) nEncontrado);
+                    Particion part = saliente.getParticion();
+                    saliente.getParticion().vaciarParticion();
+                    colaDeProcesosListosSuspendidos.add(saliente);
+                    part.setProceso(plYs);
+                    colaDeProcesosListosSuspendidos.remove(plYs);
+                    colaDeProcesosListos.add(plYs);
+                }
             }
         }
     }
 
-    // Selecciona el proceso a ejecutarse aplicando SJF. (Comparando los Tiempos de Irrupción).
-    private void planificadorCortoPlazo() {
+    /*
+     * Selecciona el procesoEnEjecucion a ejecutarse aplicando SJF. (Comparando los Tiempos de Irrupción).
+     */
 
-        unidadDeGestionDeMemoria.ordenarColaPorTiempoDeIrrupcion(colaDeProcesosListos);
-
-        this.terminarProcesoEnEjecucion();
-
+    public void planificadorCortoPlazo() {
+        ordenarColaPorTiempoDeIrrupcion(colaDeProcesosListos);
+        this.terminarProceso();
         if (colaDeProcesosListos.size() > 0) {
+            Proceso victima = colaDeProcesosListos.remove((int) 0);
             if (cpu.getProcesoEnEjecucion() == null) {
                 // El procesador está Vacio
-                Proceso procesoAEjecutar = unidadDeGestionDeMemoria.eliminarProcesoDeCola(colaDeProcesosListos, 0);
-                cpu.setProcesoEnEjecucion(procesoAEjecutar);
+                cpu.setProcesoEnEjecucion(victima);
+            } else {
+                // procesador tiene algún procesoEnEjecucion
+                colaDeProcesosListos.add(victima);
+                //}
             }
         }
         cpu.incrementarInstante();
     }
 
-    // pregunta si la cpu tiene algun proceso en ejecucion, luego si ese proceso tiene tiempo de irrupcion restante en 0
-    // y si es verdadero, imprime la situacion actual, lo añade a la cola de terminados, vacia la particion, setea el
-    // proceso en ejecucion de la cpu en null, ejecuta el planificador a mediano plazo
-    private void terminarProcesoEnEjecucion() {
-        if (cpu.getProcesoEnEjecucion() != null) {
+    /*
+     * Termina el procesoEnEjecucion actual (TI=0) moviéndolo a la cola SALIENTES y liberando la partición que ocupaba.
+     */
+
+    public void terminarProceso() {
+        if (null != cpu.getProcesoEnEjecucion()) {
             if (cpu.getProcesoEnEjecucion().getTiempoIrrupcion() == 0) {
-
                 imprimirEstadoDelSistema(this);
-
-                unidadDeGestionDeMemoria.aniadirProcesoACola(colaDeProcesosTerminados, cpu.getProcesoEnEjecucion());
-//                colaDeProcesosTerminados.add(cpu.getProcesoEnEjecucion());
+                colaDeProcesosTerminados.add(cpu.getProcesoEnEjecucion());
+                cpu.getProcesoEnEjecucion().getParticion().setProceso(null);
                 cpu.getProcesoEnEjecucion().getParticion().vaciarParticion();
                 cpu.setProcesoEnEjecucion(null);
-
-                nivelDeMultiprogramacion--;
-
-                // luego ejecuto el planificador de mediano plazo de nuevo para ver si pueden entrar nuevos procesos
                 planificadorMedianoPlazo();
+                ordenarColaPorTiempoDeIrrupcion(colaDeProcesosListos);
             }
         }
+    }
+
+    /*
+     * Crea las particiones fijas en memoria
+     */
+    private void inicializarMemoria() {
+        this.memoria = new Memoria(tamanioParticionSO);
+        this.memoria.crearNuevaParticion(250);
+        this.memoria.crearNuevaParticion(120);
+        this.memoria.crearNuevaParticion(60);
+    }
+
+    private void inicializarCpu() {
+        this.cpu = new Cpu();
+    }
+
+    private void cargarProcesos(List<Proceso> procesos) {
+        ordenarColaPorTiempoDeArribo(procesos);
+        this.colaDeProcesosNuevos = procesos;
+    }
+
+    // ordena la cola recibida por parámetro, por tiempo de arribo de menor a mayor.
+    private void ordenarColaPorTiempoDeArribo(List<Proceso> procesos) {
+        procesos.sort(Comparator.comparing(p -> p.getTiempoArribo()));
+    }
+
+    // ordena la cola recibida por tiempo de irrupcion de menor a mayor.
+    private void ordenarColaPorTiempoDeIrrupcion(List<Proceso> procesos) {
+        procesos.sort(Comparator.comparing(p -> p.getTiempoIrrupcion()));
     }
 }

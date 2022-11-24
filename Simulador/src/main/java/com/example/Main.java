@@ -9,8 +9,6 @@ import static com.example.Cpu.instanteActual;
 
 public class Main {
 
-    public static Scanner scannerTeclas = new Scanner(System.in);
-
     public static void main(String[] args) {
 
         JFileChooser jfc = new JFileChooser();
@@ -31,8 +29,6 @@ public class Main {
         } else {
             System.err.println("Error, no ha seleccionado un archivo. Reinicie la aplicacion");
         }
-
-        scannerTeclas.close();
     }
 
     private static List<Proceso> leerArchivo(File archivo) {
@@ -45,12 +41,13 @@ public class Main {
             while (scannerArchivo.hasNextLine() && procesos.size() <= 10) {
                 String linea = scannerArchivo.nextLine();
 
+                // TODO ver que mas validaciones se pueden hacer
                 // pregunto si el primer caracter, correspondiente al id del procesoEnEjecucion, es un numero
-                if(!linea.matches("[0-9;\n]+")) {
-                    throw new Exception("El archivo tiene un formato invalido");
-                }
+//                if(!linea.substring(0, 1).matches("[0-9]+")) {
+//                    throw new Exception("El archivo tiene un formato invalido");
+//                }
 
-                List<String> lineaDeProceso = Arrays.asList(linea.split(";"));
+                List<String> lineaDeProceso = Arrays.asList(linea.split(","));
                 Proceso proceso = new Proceso(lineaDeProceso);
                 procesos.add(proceso);
             }
@@ -120,7 +117,7 @@ public class Main {
 
         System.out.println("\nCola de Procesos Listos-Suspendidos");
         if (!sistemaOperativo.getColaDeProcesosListosSuspendidos().isEmpty()) {
-            for (Proceso proceso : sistemaOperativo.getColaDeProcesosListosSuspendidos()) {
+            for (Proceso proceso : sistemaOperativo.getColaDeProcesosNuevos()) {
                 System.out.println("\tProceso: " + proceso.getId() + ", Tiempo de Irrupcion: " + proceso.getTiempoIrrupcion() + ", Tamaño: " + proceso.getTamanio() + "kb");
             }
         } else {
@@ -137,26 +134,14 @@ public class Main {
             System.out.println("\tNo hay procesos en Estado LISTO");
         }
 
-        System.out.println("\nProceso en EJECUCION:");
-        if(sistemaOperativo.getCpu().getProcesoEnEjecucion() != null) {
-            Proceso proceso = sistemaOperativo.getCpu().getProcesoEnEjecucion();
-            System.out.println("\tProceso: " + proceso.getId() + ", Tiempo de Irrupcion: " + proceso.getTiempoIrrupcion() + ", Tamaño: " + proceso.getTamanio() + "kb");
-        } else {
-            System.out.println("\tNo hay ningun proceso en EJECUCION");
-        }
-
-        System.out.println("\nCola de Procesos TERMINADOS:");
-        if(!sistemaOperativo.getColaDeProcesosTerminados().isEmpty()) {
-            for (Proceso proceso : sistemaOperativo.getColaDeProcesosTerminados()) {
-                System.out.println("\tProceso: " + proceso.getId() + ", Tiempo de Irrupcion: " + proceso.getTiempoIrrupcion() + ", Tamaño: " + proceso.getTamanio() + "kb");
-            }
-        } else {
-            System.out.println("\tNo hay procesos TERMINADOS");
-        }
-
         System.out.println("--------------------------------------------------------------------------------------------");
 
-        System.out.println("Ingrese un caracter para continuar");
-        String continuar = scannerTeclas.next();
+        // TODO ver porque no anda el Scanner aca, tira NoSuchElementException, lo dejo como un Thread.sleep mientras
+        // TODO ver como se puede limpiar la consola
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            System.err.println("Error al esperar: " + e.getMessage());
+        }
     }
 }
