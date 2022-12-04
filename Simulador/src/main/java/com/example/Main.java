@@ -51,12 +51,18 @@ public class Main {
                 }
 
                 List<String> lineaDeProceso = Arrays.asList(linea.split(";"));
+
+                if (Integer.parseInt(lineaDeProceso.get(1)) > 250 || Integer.parseInt(lineaDeProceso.get(1)) <= 0) {
+                    throw new Exception("El tamaño del proceso no puede ser mayor a 250kb ni menor o igual a 0kb");
+                }
+
                 Proceso proceso = new Proceso(lineaDeProceso);
                 procesos.add(proceso);
             }
 
         } catch (Exception e) {
             System.err.println(String.format("A ocurrido un error: %s", e.getMessage()));
+            procesos = new ArrayList<>();
         }
 
         return procesos;
@@ -64,7 +70,7 @@ public class Main {
 
     // imprime por pantalla la situacion actual del sistema:
     //  - Estado del Procesador (procesoEnEjecucion que se encuentra corriendo en ese instanteActual) ✔
-    //  - Tabla de particiones de memoria, la cual debe contener (id de particion, direccion de comienzo de particion,
+    //  - Tabla de particiones de memoria, la cual debe contener (id de particion, direccion de comienzo de particion, ✔
     //    tamaño de particion, id de procesoEnEjecucion asignado a la particion, fragmentacion interna ✔
     //  - Estado de la cola de procesos colaDeProcesosListos ✔
     //  - Listado de procesos que no se encuentran en estado de listo ni ejecucion (informar el estado en que se encuentran) ✔

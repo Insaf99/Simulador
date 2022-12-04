@@ -40,4 +40,16 @@ public class Memoria {
 
         return existeParticionVacia;
     }
+
+    public List<Particion> getParticionesVacias() {
+        List<Particion> retorno = new ArrayList<>();
+
+        for (Particion particion : particiones) {
+            if (particion.getProceso() == null) {
+                retorno.add(particion);
+            }
+        }
+
+        return retorno;
+    }
 }
