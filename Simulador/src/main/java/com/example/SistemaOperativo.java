@@ -88,6 +88,12 @@ public class SistemaOperativo {
     // el planificar de largo plazo mueve los procesos de la cola de Nuevos a Listos Suspendidos dependiendo del tiempo
     // de arribo, o sea, si el proceso "llego" o no. Si los muevo, los elimino de la cola de nuevos
     private void planificadorLargoPlazo() {
+
+        /**
+         * para respetar el diagrama de los siete estados, tuvimos que incorporar una validacion extra para permitir el
+         * ingreso de procesos nuevos directamente a memoria
+         */
+
         List<Proceso> procesosAdmitidos = new ArrayList<>();
 
         for (Proceso proceso : colaDeProcesosNuevos) {
@@ -138,17 +144,12 @@ public class SistemaOperativo {
             }
         }
 
-        // luego de seleccionar los procesos con sus particiones correspondientes, los elimino de la cola de listos y suspendidos
-        // y los muevo a la cola de listos
-        //if (!procesosAniadidosAParticiones.isEmpty()) {
-            unidadDeGestionDeMemoria.aniadirProcesosACola(colaDeProcesosListos, procesosAniadidosAParticiones);
-            unidadDeGestionDeMemoria.eliminarProcesosDeCola(colaDeProcesosNuevos, procesosAniadidosAParticiones);
-            unidadDeGestionDeMemoria.eliminarProcesosDeCola(procesosAdmitidos, procesosAniadidosAParticiones);
-        //} else {
-            // sino, llamo a la MMU para añadir los procesos que pueden entrar a la cola de Listos-Suspendidos que no pudieron entrar a memoria directamente
-            unidadDeGestionDeMemoria.aniadirProcesosACola(colaDeProcesosListosSuspendidos, procesosAdmitidos);
-            unidadDeGestionDeMemoria.eliminarProcesosDeCola(colaDeProcesosNuevos, procesosAdmitidos);
-        //}
+        unidadDeGestionDeMemoria.aniadirProcesosACola(colaDeProcesosListos, procesosAniadidosAParticiones);
+        unidadDeGestionDeMemoria.eliminarProcesosDeCola(colaDeProcesosNuevos, procesosAniadidosAParticiones);
+        unidadDeGestionDeMemoria.eliminarProcesosDeCola(procesosAdmitidos, procesosAniadidosAParticiones);
+        unidadDeGestionDeMemoria.aniadirProcesosACola(colaDeProcesosListosSuspendidos, procesosAdmitidos);
+        unidadDeGestionDeMemoria.eliminarProcesosDeCola(colaDeProcesosNuevos, procesosAdmitidos);
+
     }
 
     // el planificador de mediano plazo mueve los procesos de la cola de listos-suspendidos a la cola de listos si existen
