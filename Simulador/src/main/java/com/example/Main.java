@@ -42,11 +42,17 @@ public class Main {
         // aca abro el archivo, si termina normalmente o si da error, lo cierra cuando termina el try
         try (Scanner scannerArchivo = new Scanner(archivo)) {
 
+            String primeraLinea = scannerArchivo.nextLine();
+
+            if (!primeraLinea.equals("id;tamanio;tiempoDeArribo;tiempoDeIrrupcion")) {
+                throw new Exception("El archivo tiene una cabecera mal formada");
+            }
+
             while (scannerArchivo.hasNextLine() && procesos.size() <= 10) {
                 String linea = scannerArchivo.nextLine();
 
                 // pregunto si el primer caracter, correspondiente al id del procesoEnEjecucion, es un numero
-                if(!linea.matches("[0-9;\n]+")) {
+                if(!linea.matches("^\\d+;\\d+;\\d+;\\d+$")) {
                     throw new Exception("El archivo tiene un formato invalido");
                 }
 

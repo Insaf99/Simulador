@@ -91,7 +91,10 @@ public class SistemaOperativo {
 
         /**
          * para respetar el diagrama de los siete estados, tuvimos que incorporar una validacion extra para permitir el
-         * ingreso de procesos nuevos directamente a memoria
+         * ingreso de procesos nuevos directamente a memoria, pero esto solo ocurre cuando se cumple el algoritmo SJF, y
+         * cuando los procesos que estan en la cola de listos y suspendidos tiene un tiempo de irrupcion mayor al de
+         * los que estan entrando en ese instante de tiempo. Por ende, los mensajes nuevos tienen que entrar directo a
+         * memoria, por supuesto respetando el algoritmo worst fit
          */
 
         List<Proceso> procesosAdmitidos = new ArrayList<>();
